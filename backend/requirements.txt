@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+python-multipart
+tensorflow
+nibabel
+numpy
+opencv-python-headless   # headless = no GUI deps, lighter for servers
+pydantic

@@ -1,0 +1,726 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg:         #f4f8f7;
+        --surface:    #ffffff;
+        --surface2:   #eaf4f1;
+        --border:     rgba(29, 184, 154, 0.2);
+        --accent:     #1db89a;
+        --accent2:    #17a085;
+        --accent-dim: rgba(29, 184, 154, 0.08);
+        --text:       #1a2e3b;
+        --text-muted: #7a9da6;
+        --text-mid:   #4a7080;
+        --danger:     #e05454;
+        --warn:       #e09a00;
+      }
+
+      body {
+        font-family: "DM Mono", monospace;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(29, 184, 154, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(29, 184, 154, 0.04) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 60px 32px 100px;
+      }
+
+      /* ── Header ── */
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 56px;
+        animation: fadeUp 0.6s ease both;
+      }
+
+      .logo {
+        font-family: "Syne", sans-serif;
+        font-weight: 800;
+        font-size: 22px;
+        letter-spacing: -0.5px;
+        color: var(--accent);
+      }
+      .logo span { color: var(--text); }
+
+      /* Live status pill — replaces the mock/live toggle */
+      .status-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        background: rgba(29, 184, 154, 0.08);
+        border: 1px solid rgba(29, 184, 154, 0.25);
+        border-radius: 20px;
+        padding: 6px 14px;
+        user-select: none;
+      }
+      .live-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex-shrink: 0;
+        animation: pulse 1.5s infinite;
+      }
+      .live-dot.offline {
+        background: var(--danger);
+        animation: none;
+      }
+
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+      /* ── Hero ── */
+      .hero {
+        margin-bottom: 48px;
+        animation: fadeUp 0.6s 0.1s ease both;
+      }
+      .hero h1 {
+        font-family: "Syne", sans-serif;
+        font-weight: 800;
+        font-size: clamp(36px, 6vw, 58px);
+        line-height: 1.12;
+        letter-spacing: -1px;
+        margin-bottom: 20px;
+        color: var(--text);
+      }
+      .hero h1 .accent { color: var(--accent); }
+      .hero p {
+        font-size: 14px;
+        color: var(--text-mid);
+        line-height: 1.9;
+        max-width: 560px;
+        font-weight: 300;
+      }
+
+      /* ── API URL bar (compact, no mock toggle) ── */
+      .api-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 16px;
+        margin-bottom: 24px;
+        animation: fadeUp 0.6s 0.15s ease both;
+        box-shadow: 0 2px 12px rgba(29,184,154,0.06);
+      }
+      .api-bar-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .api-bar-input {
+        flex: 1;
+        background: none;
+        border: none;
+        color: var(--text);
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        outline: none;
+      }
+      .api-bar-input::placeholder { color: var(--text-muted); }
+
+      /* ── Upload zone ── */
+      .upload-zone {
+        border: 2px dashed var(--border);
+        border-radius: 16px;
+        padding: 56px 32px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s;
+        background: var(--surface);
+        position: relative;
+        overflow: hidden;
+        animation: fadeUp 0.6s 0.2s ease both;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 16px rgba(29,184,154,0.06);
+      }
+      .upload-zone::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        border-radius: 16px 16px 0 0;
+      }
+      .upload-zone:hover, .upload-zone.drag {
+        border-color: var(--accent);
+        background: rgba(29, 184, 154, 0.04);
+        box-shadow: 0 4px 32px rgba(29,184,154,0.12);
+      }
+      .upload-zone.drag { transform: scale(1.01); }
+
+      .upload-icon {
+        width: 56px;
+        height: 56px;
+        border: 1.5px solid var(--accent);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: var(--accent);
+        background: var(--accent-dim);
+        transition: transform 0.2s, background 0.2s;
+      }
+      .upload-zone:hover .upload-icon { transform: translateY(-3px); background: rgba(29,184,154,0.14); }
+      .upload-zone h3 { font-family: "Syne", sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+      .upload-zone p  { font-size: 12px; color: var(--text-muted); font-weight: 300; }
+      .upload-zone .formats { display: inline-flex; gap: 8px; margin-top: 16px; }
+      .tag {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        color: var(--accent);
+        border: 1px solid rgba(29, 184, 154, 0.35);
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: var(--accent-dim);
+      }
+      input[type="file"] { display: none; }
+
+      /* ── File info ── */
+      .file-info {
+        display: none;
+        align-items: center;
+        gap: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        animation: fadeUp 0.3s ease both;
+        box-shadow: 0 1px 8px rgba(29,184,154,0.06);
+      }
+      .file-info.show { display: flex; }
+      .file-icon {
+        width: 40px; height: 40px;
+        background: var(--accent-dim);
+        border: 1px solid rgba(29, 184, 154, 0.25);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--accent); flex-shrink: 0;
+      }
+      .file-meta { flex: 1; min-width: 0; }
+      .file-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; color: var(--text); }
+      .file-size { font-size: 11px; color: var(--text-muted); }
+      .file-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 4px; line-height: 1; transition: color 0.2s; }
+      .file-remove:hover { color: var(--danger); }
+
+      /* ── Analyse button ── */
+      .btn-analyze {
+        width: 100%;
+        padding: 18px;
+        background: var(--accent);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        font-family: "Syne", sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        animation: fadeUp 0.6s 0.3s ease both;
+        box-shadow: 0 4px 20px rgba(29,184,154,0.25);
+      }
+      .btn-analyze:disabled { background: #d0dfe0; color: #99b5b8; cursor: not-allowed; box-shadow: none; }
+      .btn-analyze:not(:disabled):hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 32px rgba(29,184,154,0.32); }
+
+      /* ── Scanning ── */
+      .scan-container {
+        display: none;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 40px;
+        text-align: center;
+        margin-top: 24px;
+        animation: fadeUp 0.4s ease both;
+        box-shadow: 0 2px 16px rgba(29,184,154,0.07);
+      }
+      .scan-container.show { display: block; }
+
+      .scan-visual {
+        width: 120px; height: 120px;
+        border-radius: 50%;
+        border: 1px solid rgba(29, 184, 154, 0.2);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 24px;
+        position: relative;
+        background: var(--surface2);
+      }
+      .scan-visual::before {
+        content: ""; position: absolute; inset: 6px;
+        border-radius: 50%;
+        border: 1px solid rgba(29, 184, 154, 0.15);
+      }
+      .scan-ring  { position: absolute; inset: 0;    border-radius: 50%; border: 2px   solid transparent; border-top-color: var(--accent);             animation: spin 1.2s linear infinite; }
+      .scan-ring2 { position: absolute; inset: 12px; border-radius: 50%; border: 1.5px solid transparent; border-bottom-color: rgba(29,184,154,0.4); animation: spin 1.8s linear infinite reverse; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .scan-label { font-family: "Syne", sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--accent); }
+      .scan-sub   { font-size: 11px; color: var(--text-muted); font-weight: 300; }
+      .scan-steps { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
+      .step-dot   { width: 6px; height: 6px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); transition: all 0.3s; }
+      .step-dot.active { background: var(--accent); border-color: var(--accent); }
+      .step-dot.done   { background: rgba(29,184,154,0.35); border-color: rgba(29,184,154,0.35); }
+
+      /* ── Result card ── */
+      .result-card {
+        display: none;
+        background: var(--surface);
+        border: 1px solid rgba(29, 184, 154, 0.3);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-top: 24px;
+        animation: fadeUp 0.5s ease both;
+        box-shadow: 0 4px 24px rgba(29,184,154,0.1);
+      }
+      .result-card.show { display: block; }
+
+      .result-header {
+        background: var(--accent);
+        padding: 20px 28px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .result-header-dot { width: 10px; height: 10px; border-radius: 50%; background: #fff; opacity: 0.85; animation: pulse 2s infinite; }
+      .result-header-label { font-family: "Syne", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; color: #fff; }
+      .result-header-file  { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.7); }
+
+      .result-body { padding: 36px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+      .age-display { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; }
+      .age-number { font-family: "Syne", sans-serif; font-size: 80px; font-weight: 800; letter-spacing: -4px; color: var(--accent); line-height: 1; }
+      .age-unit   { font-size: 20px; color: var(--text-mid); font-weight: 300; letter-spacing: -0.5px; }
+
+      /* confidence range */
+      .conf-range {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 16px;
+      }
+      .conf-range strong { color: var(--accent); font-weight: 700; }
+
+      .age-bar-wrap { grid-column: 1 / -1; margin-top: 4px; }
+      .age-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 8px; }
+      .age-bar-track  { height: 7px; background: var(--surface2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+      .age-bar-fill   { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 4px; transition: width 1s ease; width: 0%; }
+
+      .result-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; grid-column: 1 / -1; }
+      .meta-item {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 16px;
+        border-left: 3px solid var(--accent);
+        border-radius: 0 10px 10px 0;
+      }
+      .meta-label { font-size: 10px; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 6px; }
+      .meta-value { font-family: "Syne", sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
+      .meta-value.ok { color: var(--accent); }
+
+      .result-actions { padding: 20px 28px; border-top: 1px solid var(--border); display: flex; gap: 12px; background: var(--surface2); }
+      .btn-reset {
+        flex: 1; padding: 12px; background: none;
+        border: 1.5px solid var(--accent); color: var(--accent);
+        border-radius: 10px; font-family: "DM Mono", monospace;
+        font-size: 12px; cursor: pointer; transition: all 0.2s;
+        letter-spacing: 0.05em; font-weight: 500;
+      }
+      .btn-reset:hover { background: var(--accent); color: #fff; }
+
+      /* ── Error ── */
+      .error-box {
+        display: none;
+        margin-top: 24px;
+        background: #fff5f5;
+        border: 1px solid rgba(224, 84, 84, 0.3);
+        border-left: 3px solid var(--danger);
+        border-radius: 0 12px 12px 0;
+        padding: 20px 24px;
+        animation: fadeUp 0.3s ease both;
+      }
+      .error-box.show { display: block; }
+      .error-title { font-family: "Syne", sans-serif; font-size: 13px; font-weight: 700; color: var(--danger); margin-bottom: 6px; }
+      .error-msg   { font-size: 12px; color: var(--text-muted); font-weight: 300; }
+
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+      .brain-svg { width: 32px; height: 32px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <!-- Header -->
+      <header>
+        <div class="logo">neuro<span>age</span></div>
+        <div class="status-pill">
+          <div class="live-dot" id="liveDot"></div>
+          <span id="statusLabel">CONNECTING…</span>
+        </div>
+      </header>
+
+      <!-- Hero -->
+      <div class="hero">
+        <h1>Brain Age<br /><span class="accent">Detection</span></h1>
+        <p>Upload an MRI scan (.nii / .nii.gz) and the ensemble model will predict the structural brain age from axial slice analysis.</p>
+      </div>
+
+      <!-- API URL bar -->
+      <div class="api-bar">
+        <span class="api-bar-label">API</span>
+        <input class="api-bar-input" id="apiUrl" type="text" value="http://localhost:8000" placeholder="http://localhost:8000" onchange="checkHealth()" />
+      </div>
+
+      <!-- Upload zone -->
+      <div
+        class="upload-zone"
+        id="uploadZone"
+        ondragover="onDrag(event, true)"
+        ondragleave="onDrag(event, false)"
+        ondrop="onDrop(event)"
+        onclick="document.getElementById('fileInput').click()"
+      >
+        <div class="upload-icon">
+          <svg class="brain-svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M16 4C10 4 6 8 6 13c0 2.5 1 4.5 2.5 6L8 26h16l-.5-7C25 17.5 26 15.5 26 13c0-5-4-9-10-9z"/>
+            <path d="M16 4v22M10 12c1.5 1 3.5 1 6 0M22 12c-1.5 1-3.5 1-6 0M8.5 19h15" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>Drop MRI scan here</h3>
+        <p>or click to browse files</p>
+        <div class="formats">
+          <span class="tag">.NII</span>
+          <span class="tag">.NII.GZ</span>
+        </div>
+        <input type="file" id="fileInput" accept=".nii,.nii.gz" onchange="onFileSelect(event)" />
+      </div>
+
+      <!-- File info -->
+      <div class="file-info" id="fileInfo">
+        <div class="file-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="1" width="12" height="16" rx="2"/>
+            <path d="M6 6h6M6 9h6M6 12h4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="file-meta">
+          <div class="file-name" id="fileName">—</div>
+          <div class="file-size" id="fileSize">—</div>
+        </div>
+        <button class="file-remove" onclick="removeFile()">×</button>
+      </div>
+
+      <!-- Analyse button -->
+      <button class="btn-analyze" id="analyzeBtn" onclick="analyze()" disabled>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M8 5v3l2 2" stroke-linecap="round"/>
+        </svg>
+        ANALYZE SCAN
+      </button>
+
+      <!-- Scanning -->
+      <div class="scan-container" id="scanContainer">
+        <div class="scan-visual">
+          <div class="scan-ring"></div>
+          <div class="scan-ring2"></div>
+          <svg width="36" height="36" viewBox="0 0 32 32" fill="none" stroke="var(--accent)" stroke-width="1.2" opacity="0.7">
+            <path d="M16 4C10 4 6 8 6 13c0 2.5 1 4.5 2.5 6L8 26h16l-.5-7C25 17.5 26 15.5 26 13c0-5-4-9-10-9z"/>
+            <path d="M16 4v22M10 12c1.5 1 3.5 1 6 0M22 12c-1.5 1-3.5 1-6 0" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="scan-label" id="scanLabel">LOADING MRI</div>
+        <div class="scan-sub"   id="scanSub">Extracting axial slices…</div>
+        <div class="scan-steps">
+          <div class="step-dot" id="step0"></div>
+          <div class="step-dot" id="step1"></div>
+          <div class="step-dot" id="step2"></div>
+          <div class="step-dot" id="step3"></div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="error-box" id="errorBox">
+        <div class="error-title">⚠ Prediction failed</div>
+        <div class="error-msg" id="errorMsg">Could not connect to backend.</div>
+      </div>
+
+      <!-- Result -->
+      <div class="result-card" id="resultCard">
+        <div class="result-header">
+          <div class="result-header-dot"></div>
+          <span class="result-header-label">ANALYSIS COMPLETE</span>
+          <span class="result-header-file" id="resultFile"></span>
+        </div>
+        <div class="result-body">
+
+          <div class="age-display">
+            <div class="age-number" id="ageNumber">—</div>
+            <div class="age-unit">years</div>
+          </div>
+
+          <!-- Confidence band -->
+          <div class="conf-range" id="confRange">
+            Confidence range: <strong id="confLow">—</strong> &nbsp;–&nbsp; <strong id="confHigh">—</strong> years
+          </div>
+
+          <div class="age-bar-wrap">
+            <div class="age-bar-labels">
+              <span>0</span><span>25</span><span>50</span><span>75</span><span>100</span>
+            </div>
+            <div class="age-bar-track">
+              <div class="age-bar-fill" id="ageBarFill"></div>
+            </div>
+          </div>
+
+          <div class="result-meta">
+            <div class="meta-item">
+              <div class="meta-label">STATUS</div>
+              <div class="meta-value ok">SUCCESS</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">PROCESSING TIME</div>
+              <div class="meta-value" id="metaTime">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">RAW MODEL OUTPUT</div>
+              <div class="meta-value" id="metaRaw">—</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">INPUT SHAPE</div>
+              <div class="meta-value">128 × 128 × 3</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="result-actions">
+          <button class="btn-reset" onclick="reset()">← ANALYZE ANOTHER SCAN</button>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      const SCAN_STEPS = [
+        ["LOADING MRI",   "Reading .nii file…"],
+        ["SLICING",       "Extracting 5 axial slices…"],
+        ["PREPROCESSING", "Normalizing & resizing to 128×128…"],
+        ["INFERENCING",   "Running ensemble model…"],
+      ];
+
+      let selectedFile = null;
+
+      // ── Health check ──────────────────────────────────────────────────────
+      async function checkHealth() {
+        const url = apiUrl().replace(/\/$/, "");
+        const dot   = document.getElementById("liveDot");
+        const label = document.getElementById("statusLabel");
+        try {
+          const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(4000) });
+          if (res.ok) {
+            dot.className   = "live-dot";
+            label.textContent = "LIVE";
+          } else {
+            throw new Error("non-ok");
+          }
+        } catch {
+          dot.className   = "live-dot offline";
+          label.textContent = "OFFLINE";
+        }
+      }
+
+      function apiUrl() { return document.getElementById("apiUrl").value.trim(); }
+
+      // Check health on load and every 15 s
+      checkHealth();
+      setInterval(checkHealth, 15000);
+
+      // ── Drag & drop ───────────────────────────────────────────────────────
+      function onDrag(e, active) {
+        e.preventDefault();
+        document.getElementById("uploadZone").classList.toggle("drag", active);
+      }
+      function onDrop(e) {
+        e.preventDefault();
+        onDrag(e, false);
+        const f = e.dataTransfer.files[0];
+        if (f) setFile(f);
+      }
+      function onFileSelect(e) {
+        const f = e.target.files[0];
+        if (f) setFile(f);
+      }
+      function setFile(f) {
+        if (!f.name.toLowerCase().endsWith(".nii") && !f.name.toLowerCase().endsWith(".nii.gz")) {
+          showError("Invalid file type. Please upload a .nii or .nii.gz file.");
+          return;
+        }
+        selectedFile = f;
+        document.getElementById("fileName").textContent = f.name;
+        document.getElementById("fileSize").textContent = formatBytes(f.size);
+        document.getElementById("fileInfo").classList.add("show");
+        document.getElementById("analyzeBtn").disabled = false;
+        hide("errorBox"); hide("resultCard"); hide("scanContainer");
+      }
+      function removeFile() {
+        selectedFile = null;
+        document.getElementById("fileInfo").classList.remove("show");
+        document.getElementById("analyzeBtn").disabled = true;
+        document.getElementById("fileInput").value = "";
+        hide("errorBox"); hide("resultCard"); hide("scanContainer");
+      }
+
+      // ── Analyse ───────────────────────────────────────────────────────────
+      async function analyze() {
+        if (!selectedFile) return;
+        hide("errorBox"); hide("resultCard");
+        show("scanContainer");
+        document.getElementById("analyzeBtn").disabled = true;
+
+        await animateSteps();
+
+        try {
+          const result = await realPredict(selectedFile);
+          showResult(result);
+        } catch (err) {
+          hide("scanContainer");
+          showError(err.message || "Unknown error");
+          document.getElementById("analyzeBtn").disabled = false;
+        }
+      }
+
+      async function animateSteps() {
+        for (let i = 0; i < SCAN_STEPS.length; i++) {
+          document.getElementById("scanLabel").textContent = SCAN_STEPS[i][0];
+          document.getElementById("scanSub").textContent   = SCAN_STEPS[i][1];
+          for (let j = 0; j < 4; j++) {
+            document.getElementById("step" + j).className =
+              "step-dot" + (j < i ? " done" : j === i ? " active" : "");
+          }
+          await sleep(500);
+        }
+      }
+
+      async function realPredict(file) {
+        const url  = apiUrl().replace(/\/$/, "");
+        const form = new FormData();
+        form.append("file", file);
+
+        let res;
+        try {
+          res = await fetch(`${url}/predict`, { method: "POST", body: form });
+        } catch {
+          throw new Error(`Cannot reach backend at ${url}. Is uvicorn running?`);
+        }
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.detail || `Server error ${res.status}`);
+        }
+
+        return res.json();
+      }
+
+      function showResult(r) {
+        hide("scanContainer");
+
+        // Animate age counter
+        const el  = document.getElementById("ageNumber");
+        const age = r.predicted_age;
+        const t0  = performance.now();
+        (function tick(now) {
+          const t = Math.min(1, (now - t0) / 1000);
+          const e = 1 - Math.pow(1 - t, 3);
+          el.textContent = Math.round(age * e);
+          if (t < 1) requestAnimationFrame(tick);
+          else el.textContent = age.toFixed(1);
+        })(t0);
+
+        // Confidence band
+        if (r.confidence_low !== undefined) {
+          document.getElementById("confLow").textContent  = r.confidence_low;
+          document.getElementById("confHigh").textContent = r.confidence_high;
+          show("confRange");
+        } else {
+          hide("confRange");
+        }
+
+        document.getElementById("metaTime").textContent = r.processing_time_s + "s";
+        document.getElementById("metaRaw").textContent  = (r.raw_age !== undefined ? r.raw_age + " yrs" : "—");
+        document.getElementById("resultFile").textContent = r.filename;
+
+        show("resultCard");
+        setTimeout(() => {
+          document.getElementById("ageBarFill").style.width = Math.min(age, 100) + "%";
+        }, 100);
+      }
+
+      function showError(msg) {
+        document.getElementById("errorMsg").textContent = msg;
+        show("errorBox");
+      }
+
+      function reset() {
+        removeFile();
+        hide("resultCard");
+        document.getElementById("ageBarFill").style.width = "0%";
+      }
+
+      function show(id) { document.getElementById(id).classList.add("show"); }
+      function hide(id) { document.getElementById(id).classList.remove("show"); }
+      function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+      function formatBytes(b) {
+        if (b < 1024) return b + " B";
+        if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+        return (b / 1024 / 1024).toFixed(1) + " MB";
+      }
+    </script>
+  </body>
+</html>

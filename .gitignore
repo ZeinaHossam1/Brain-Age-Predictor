@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+.venv/
+venv/
+
+# Models
+*.h5
+*.keras
+*.weights.h5
+
+# MRI files
+*.nii
+*.nii.gz
+
+# Dataset
+brain_structure_cache/
+
+# VSCode
+.vscode/
